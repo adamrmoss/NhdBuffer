@@ -10,10 +10,10 @@ namespace NhdBuffer
 
     public VirtualDisplay()
     {
-      this.imageData = new uint[Width, Height];
+      this.ImageData = new uint[Width, Height];
     }
 
-    private readonly uint[,] imageData;
+    public uint[,] ImageData { get; }
 
     public bool IsRunning { get; private set; }
     public DateTime SimulationTime { get; private set; }
@@ -40,7 +40,7 @@ namespace NhdBuffer
       {
         this.SimulationTime += deltaTime;
         this.FrameCounter++;
-        this.preRenderer?.Invoke(this.imageData);
+        this.preRenderer?.Invoke(this.ImageData);
       }
     }
   }
