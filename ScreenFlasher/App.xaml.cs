@@ -25,7 +25,10 @@ namespace ScreenFlasher
 
     private void startup(object sender, StartupEventArgs e)
     {
-      var nhdBufferWindow = new NhdBufferWindow();
+      var nhdBufferWindow = new NhdBufferWindow
+      {
+        Title = "Screen Flasher"
+      };
       nhdBufferWindow.Show();
       nhdBufferWindow.StartVirtualDisplay(this.perFrame, DateTime.UtcNow);
     }

@@ -129,19 +129,14 @@ namespace NhdBuffer
 
     private unsafe void render360PBitmap()
     {
-      const int height = VirtualDisplay.Height;
-      const int width = VirtualDisplay.Width;
-      var stride = width * bytesPerPixel;
-
       var virtualDisplayImageData = this.virtualDisplay.ImageData;
 
       this.display360Bitmap.Lock();
 
-      for (var row = 0; row < height; row++)
+      var backBufferPointer = (uint) this.display360Bitmap.BackBuffer;
+      for (var row = 0; row < VirtualDisplay.Height; row++)
       {
-        var backBufferPointer = (uint) this.display360Bitmap.BackBuffer + row * stride;
-
-        for (var column = 0; column < width; column++)
+        for (var column = 0; column < VirtualDisplay.Width; column++)
         {
           var inputPixel = virtualDisplayImageData[column, row];
           var outputPixel = inputPixel & 0x00ffffff;
@@ -149,65 +144,83 @@ namespace NhdBuffer
           backBufferPointer += 4;
         }
       }
-      this.display360Bitmap.AddDirtyRect(new Int32Rect(0, 0, width, height));
+      this.display360Bitmap.AddDirtyRect(new Int32Rect(0, 0, this.display360Bitmap.PixelWidth, this.display360Bitmap.PixelHeight));
       this.display360Bitmap.Unlock();
     }
 
     private unsafe void render720PBitmap()
     {
-      const int height = VirtualDisplay.Height * 2;
+      var virtualDisplayImageData = this.virtualDisplay.ImageData;
       const int width = VirtualDisplay.Width * 2;
       var stride = width * bytesPerPixel;
 
-      var virtualDisplayImageData = this.virtualDisplay.ImageData;
-
       this.display720Bitmap.Lock();
 
-      for (var row = 0; row < height; row++)
+      var backBufferPointer0 = (uint) this.display720Bitmap.BackBuffer;
+      var backBufferPointer1 = backBufferPointer0 + stride;
+      for (var row = 0; row < VirtualDisplay.Height; row++)
       {
-        var backBufferPointer = (uint) this.display720Bitmap.BackBuffer + row * stride;
-
-        for (var column = 0; column < width; column += 2)
+        for (var column = 0; column < VirtualDisplay.Width; column++)
         {
-          var inputPixel = virtualDisplayImageData[column / 2, row / 2];
+          var inputPixel = virtualDisplayImageData[column, row];
           var outputPixel = inputPixel & 0x00ffffff;
-          *(uint*) backBufferPointer = outputPixel;
-          backBufferPointer += 4;
-          *(uint*) backBufferPointer = outputPixel;
-          backBufferPointer += 4;
+          *(uint*) backBufferPointer0 = outputPixel;
+          backBufferPointer0 += 4;
+          *(uint*) backBufferPointer0 = outputPixel;
+          backBufferPointer0 += 4;
+          *(uint*) backBufferPointer1 = outputPixel;
+          backBufferPointer1 += 4;
+          *(uint*) backBufferPointer1 = outputPixel;
+          backBufferPointer1 += 4;
         }
+        backBufferPointer0 = (uint) (backBufferPointer0 + stride);
+        backBufferPointer1 = (uint) (backBufferPointer1 + stride);
       }
-      this.display720Bitmap.AddDirtyRect(new Int32Rect(0, 0, width, height));
+      this.display720Bitmap.AddDirtyRect(new Int32Rect(0, 0, this.display720Bitmap.PixelWidth, this.display720Bitmap.PixelHeight));
       this.display720Bitmap.Unlock();
     }
 
     private unsafe void render1080PBitmap()
     {
-      const int height = VirtualDisplay.Height * 3;
+      var virtualDisplayImageData = this.virtualDisplay.ImageData;
       const int width = VirtualDisplay.Width * 3;
       var stride = width * bytesPerPixel;
 
-      var virtualDisplayImageData = this.virtualDisplay.ImageData;
-
       this.display1080Bitmap.Lock();
 
-      for (var row = 0; row < height; row++)
+      var backBufferPointer0 = (uint) this.display1080Bitmap.BackBuffer;
+      var backBufferPointer1 = backBufferPointer0 + stride;
+      var backBufferPointer2 = backBufferPointer1 + stride;
+      for (var row = 0; row < VirtualDisplay.Height; row++)
       {
-        var backBufferPointer = (uint) this.display1080Bitmap.BackBuffer + row * stride;
-
-        for (var column = 0; column < width; column += 3)
+        for (var column = 0; column < VirtualDisplay.Width; column++)
         {
-          var inputPixel = virtualDisplayImageData[column / 3, row / 3];
+          var inputPixel = virtualDisplayImageData[column, row];
           var outputPixel = inputPixel & 0x00ffffff;
-          *(uint*) backBufferPointer = outputPixel;
-          backBufferPointer += 4;
-          *(uint*) backBufferPointer = outputPixel;
-          backBufferPointer += 4;
-          *(uint*) backBufferPointer = outputPixel;
-          backBufferPointer += 4;
+          *(uint*) backBufferPointer0 = outputPixel;
+          backBufferPointer0 += 4;
+          *(uint*) backBufferPointer0 = outputPixel;
+          backBufferPointer0 += 4;
+          *(uint*) backBufferPointer0 = outputPixel;
+          backBufferPointer0 += 4;
+          *(uint*) backBufferPointer1 = outputPixel;
+          backBufferPointer1 += 4;
+          *(uint*) backBufferPointer1 = outputPixel;
+          backBufferPointer1 += 4;
+          *(uint*) backBufferPointer1 = outputPixel;
+          backBufferPointer1 += 4;
+          *(uint*) backBufferPointer2 = outputPixel;
+          backBufferPointer2 += 4;
+          *(uint*) backBufferPointer2 = outputPixel;
+          backBufferPointer2 += 4;
+          *(uint*) backBufferPointer2 = outputPixel;
+          backBufferPointer2 += 4;
         }
+        backBufferPointer0 = (uint) (backBufferPointer0 + stride * 2);
+        backBufferPointer1 = (uint) (backBufferPointer1 + stride * 2);
+        backBufferPointer2 = (uint) (backBufferPointer2 + stride * 2);
       }
-      this.display1080Bitmap.AddDirtyRect(new Int32Rect(0, 0, width, height));
+      this.display1080Bitmap.AddDirtyRect(new Int32Rect(0, 0, this.display1080Bitmap.PixelWidth, this.display1080Bitmap.PixelHeight));
       this.display1080Bitmap.Unlock();
     }
 
