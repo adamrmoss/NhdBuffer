@@ -51,7 +51,9 @@
     <Compile Include="NhdBufferWindow.xaml.cs">
       <DependentUpon>NhdBufferWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="NhdBufferWindowMode.cs" />
     <Compile Include="UintColors.cs" />
+    <Compile Include="VirtualDisplay.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
