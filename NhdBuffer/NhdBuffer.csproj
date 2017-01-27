@@ -49,6 +49,7 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MoreMath.cs" />
     <Compile Include="NhdBufferWindow.xaml.cs">
       <DependentUpon>NhdBufferWindow.xaml</DependentUpon>
     </Compile>

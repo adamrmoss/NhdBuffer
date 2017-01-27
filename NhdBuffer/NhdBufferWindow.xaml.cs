@@ -53,6 +53,7 @@ namespace NhdBuffer
 
     private NhdBufferWindowMode mode;
     private TimeSpan lastRenderingTime;
+    private Action<VirtualDisplay, TimeSpan> perFrameAction;
 
     public void View360(object sender, RoutedEventArgs e)
     {
@@ -106,6 +107,8 @@ namespace NhdBuffer
       if (this.virtualDisplay?.IsRunning == true)
       {
         var deltaTime = renderingTime - this.lastRenderingTime;
+        this.perFrameAction?.Invoke(this.virtualDisplay, deltaTime);
+
         this.virtualDisplay.ProcessOneFrame(deltaTime);
         switch (this.mode)
         {
@@ -206,6 +209,18 @@ namespace NhdBuffer
       }
       this.display1080Bitmap.AddDirtyRect(new Int32Rect(0, 0, width, height));
       this.display1080Bitmap.Unlock();
+    }
+
+    public void StartVirtualDisplay(Action<VirtualDisplay, TimeSpan> perFrameAction, DateTime simulationStartTime)
+    {
+      this.perFrameAction = perFrameAction;
+      this.virtualDisplay.Start(simulationStartTime);
+    }
+
+    public void StopVirtualDisplay()
+    {
+      this.perFrameAction = null;
+      this.virtualDisplay.Stop();
     }
 
     private void quit(object sender, RoutedEventArgs e)

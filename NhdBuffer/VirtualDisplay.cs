@@ -19,19 +19,15 @@ namespace NhdBuffer
     public DateTime SimulationTime { get; private set; }
     public long FrameCounter { get; private set; }
 
-    private Action<uint[,]> preRenderer;
-
-    public void Start(DateTime startingSimulationTime, Action<uint[,]> preRenderer=null)
+    public void Start(DateTime startingSimulationTime)
     {
       this.IsRunning = true;
       this.SimulationTime = startingSimulationTime;
-      this.preRenderer = preRenderer;
     }
 
     public void Stop()
     {
       this.IsRunning = false;
-      this.preRenderer = null;
     }
 
     public void ProcessOneFrame(TimeSpan deltaTime)
@@ -40,7 +36,6 @@ namespace NhdBuffer
       {
         this.SimulationTime += deltaTime;
         this.FrameCounter++;
-        this.preRenderer?.Invoke(this.ImageData);
       }
     }
   }
