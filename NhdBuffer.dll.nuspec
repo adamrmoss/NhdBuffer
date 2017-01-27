@@ -2,14 +2,14 @@
 <package >
   <metadata>
     <id>NhdBuffer</id>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <authors>Adam R Moss</authors>
     <owners>adamrmoss</owners>
     <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
     <projectUrl>https://github.com/adamrmoss/NhdBuffer</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A framebuffer window for nHD (640x360x32bit) video. Optionally scales to 720P or 1080P. Runs on WPF and provides a 60 FPS event for games and animations to prerender.</description>
-    <releaseNotes>Initial Version</releaseNotes>
+    <releaseNotes>Dropped MoreMath</releaseNotes>
     <copyright>Copyright 2017</copyright>
     <tags>frame buffer game</tags>
     <dependencies></dependencies>
