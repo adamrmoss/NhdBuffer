@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -40,6 +41,8 @@ namespace NhdBuffer
 
       this.virtualDisplay = new VirtualDisplay();
 
+      Task.Run(() => this.loopForBackgroundThread());
+
       CompositionTarget.Rendering += this.onRenderFrame;
     }
 
@@ -51,10 +54,13 @@ namespace NhdBuffer
     private readonly WriteableBitmap display720Bitmap;
     private readonly WriteableBitmap display1080Bitmap;
     private readonly VirtualDisplay virtualDisplay;
+    private readonly object processFrameLock = new object();
 
     private NhdBufferWindowMode mode;
     private TimeSpan lastRenderingTime;
     private Action<VirtualDisplay, TimeSpan> perFrameAction;
+    private TimeSpan deltaTime;
+    private bool readyToProcessFrame;
 
     public void View360(object sender, RoutedEventArgs e)
     {
@@ -107,24 +113,25 @@ namespace NhdBuffer
 
       if (this.virtualDisplay?.IsRunning == true)
       {
-        var deltaTime = renderingTime - this.lastRenderingTime;
-        this.perFrameAction?.Invoke(this.virtualDisplay, deltaTime);
-        switch (this.mode)
+        lock (this.processFrameLock)
         {
-          case NhdBufferWindowMode.Hd360:
-            this.render360Bitmap();
-            break;
-          case NhdBufferWindowMode.Hd720:
-            this.render720Bitmap();
-            break;
-          case NhdBufferWindowMode.Hd1080:
-            this.render1080Bitmap();
-            break;
-        }
+          this.deltaTime = renderingTime - this.lastRenderingTime;
+          this.perFrameAction?.Invoke(this.virtualDisplay, this.deltaTime);
+          switch (this.mode)
+          {
+            case NhdBufferWindowMode.Hd360:
+              this.render360Bitmap();
+              break;
+            case NhdBufferWindowMode.Hd720:
+              this.render720Bitmap();
+              break;
+            case NhdBufferWindowMode.Hd1080:
+              this.render1080Bitmap();
+              break;
+          }
 
-        // TODO: Move to separate thread?
-        //Task.Run(() => this.virtualDisplay.ProcessOneFrame(deltaTime));
-        this.virtualDisplay.ProcessOneFrame(deltaTime);
+          this.readyToProcessFrame = true;
+        }
       }
 
       this.lastRenderingTime = renderingTime;
@@ -226,6 +233,22 @@ namespace NhdBuffer
       }
       this.display1080Bitmap.AddDirtyRect(new Int32Rect(0, 0, this.display1080Bitmap.PixelWidth, this.display1080Bitmap.PixelHeight));
       this.display1080Bitmap.Unlock();
+    }
+
+    private void loopForBackgroundThread()
+    {
+      while (true)
+      {
+        lock (this.processFrameLock)
+        {
+          if (this.readyToProcessFrame)
+          {
+            this.virtualDisplay.ProcessOneFrame(this.deltaTime);
+            this.readyToProcessFrame = false;
+          }
+          Thread.Yield();
+        }
+      }
     }
 
     public void StartVirtualDisplay(Action<VirtualDisplay, TimeSpan> perFrameAction, DateTime simulationStartTime)
