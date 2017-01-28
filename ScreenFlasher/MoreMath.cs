@@ -22,12 +22,12 @@ namespace ScreenFlasher
 
     public static int Clamp(int value, int min, int max)
     {
-      return Math.Min(1, Math.Max(0, value));
+      return Math.Min(max, Math.Max(min, value));
     }
 
     public static double Clamp(double value, double min, double max)
     {
-      return Math.Min(1.0, Math.Max(0.0, value));
+      return Math.Min(max, Math.Max(min, value));
     }
   }
 }

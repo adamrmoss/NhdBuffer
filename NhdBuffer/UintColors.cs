@@ -37,46 +37,57 @@ namespace NhdBuffer
 
     public static uint BlendOver(this uint foreground, uint background)
     {
-      var foregroundAlpha = getAlpha(foreground);
-      var backgroundAlpha = getAlpha(background);
+      var foregroundAlpha = foreground.GetAlpha();
+      var backgroundAlpha = background.GetAlpha();
       var residualAlpha = backgroundAlpha * (0xff - foregroundAlpha) >> 8;
-      var outAlpha = (byte) (foregroundAlpha + residualAlpha);
+      var outAlpha = Convert.ToByte(foregroundAlpha + residualAlpha);
       if (outAlpha == 0)
         return 0x00000000;
 
-      var foregroundRed = getRed(foreground);
-      var backgroundRed = getRed(background);
-      var outRed = (byte) ((foregroundRed * foregroundAlpha + backgroundRed * residualAlpha) / outAlpha);
+      var foregroundRed = foreground.GetRed();
+      var backgroundRed = background.GetRed();
+      var outRed = Convert.ToByte((foregroundRed * foregroundAlpha + backgroundRed * residualAlpha) / outAlpha);
 
-      var foregroundGreen = getGreen(foreground);
-      var backgroundGreen = getGreen(background);
-      var outGreen = (byte) ((foregroundGreen * foregroundAlpha + backgroundGreen * residualAlpha) / outAlpha);
+      var foregroundGreen = foreground.GetGreen();
+      var backgroundGreen = background.GetGreen();
+      var outGreen = Convert.ToByte((foregroundGreen * foregroundAlpha + backgroundGreen * residualAlpha) / outAlpha);
 
-      var foregroundBlue = getBlue(foreground);
-      var backgroundBlue = getBlue(background);
-      var outBlue = (byte) ((foregroundBlue * foregroundAlpha + backgroundBlue * residualAlpha) / outAlpha);
+      var foregroundBlue = foreground.GetBlue();
+      var backgroundBlue = background.GetBlue();
+      var outBlue = Convert.ToByte((foregroundBlue * foregroundAlpha + backgroundBlue * residualAlpha) / outAlpha);
 
       return BuildUint(outAlpha, outRed, outGreen, outBlue);
     }
 
-    private static byte getAlpha(uint bgra)
+    public static byte GetAlpha(this uint bgra)
     {
-      return (byte) (bgra >> 24);
+      return Convert.ToByte(bgra >> 24);
     }
 
-    private static byte getRed(uint bgra)
+    public static byte GetRed(this uint bgra)
     {
-      return (byte) (bgra & 0x00ff0000 >> 16);
+      return Convert.ToByte((bgra & 0x00ff0000) >> 16);
     }
 
-    private static byte getGreen(uint bgra)
+    public static byte GetGreen(this uint bgra)
     {
-      return (byte) (bgra & 0x0000ff00 >> 8);
+      return Convert.ToByte((bgra & 0x0000ff00) >> 8);
     }
 
-    private static byte getBlue(uint bgra)
+    public static byte GetBlue(this uint bgra)
     {
-      return (byte) (bgra & 0x000000ff);
+      return Convert.ToByte(bgra & 0x000000ff);
+    }
+
+    public static uint ScaleBy(this uint bgra, double t)
+    {
+      t = MoreMath.Clamp(t, 0, 1);
+
+      var red = Convert.ToByte(bgra.GetRed() * t);
+      var green = Convert.ToByte(bgra.GetGreen() * t);
+      var blue = Convert.ToByte(bgra.GetBlue() * t);
+
+      return BuildUint(red, green, blue);
     }
   }
 }

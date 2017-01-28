@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace ScrollingHorizon
+namespace NhdBuffer
 {
   public static class MoreMath
   {
