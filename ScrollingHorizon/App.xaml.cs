@@ -43,45 +43,34 @@ namespace ScrollingHorizon
 
     private void drawSky(VirtualDisplay virtualDisplay)
     {
-      var skyColorInt1 = skyColor1.AsBgrUint();
-      var skyColorInt2 = skyColor2.AsBgrUint();
-
-      var depthMultiplier = Math.Exp(1.0 / depthOfField);
-      var currentDepth = depthMultiplier;
-      for (var j = 0; j < VirtualDisplay.Height / 2; j++)
-      {
-        var rowDepth = currentDepth + this.cameraPosition;
-        var bandNumber = (int) (rowDepth / skyBandDepth);
-        var currentColorInt = bandNumber % 2 == 0 ? skyColorInt1 : skyColorInt2;
-        var brightness = (1.0 - j * 2.0 / VirtualDisplay.Height) / 2.0 + .5;
-        var fadedColor = currentColorInt.ScaleBy(brightness);
-
-        for (var i = 0; i < VirtualDisplay.Width; i++)
-        {
-          virtualDisplay.ImageData[i, j] = fadedColor;
-        }
-
-        currentDepth *= depthMultiplier;
-      }
+      this.drawBands(virtualDisplay, skyColor1, skyColor2, skyBandDepth, true);
     }
 
     private void drawGround(VirtualDisplay virtualDisplay)
     {
-      var groundColorInt1 = groundColor1.AsBgrUint();
-      var groundColorInt2 = groundColor2.AsBgrUint();
+      this.drawBands(virtualDisplay, groundColor1, groundColor2, groundBandDepth, false);
+    }
+
+    private void drawBands(VirtualDisplay virtualDisplay, Color color1, Color color2, double bandDepth, bool drawFromTop)
+    {
+      var colorInt1 = color1.AsBgrUint();
+      var colorInt2 = color2.AsBgrUint();
 
       var depthMultiplier = Math.Exp(1.0 / depthOfField);
       var currentDepth = depthMultiplier;
       for (var j = 0; j < VirtualDisplay.Height / 2; j++)
       {
         var rowDepth = currentDepth + this.cameraPosition;
-        var bandNumber = (int) (rowDepth / groundBandDepth);
-        var currentColorInt = bandNumber % 2 == 0 ? groundColorInt1 : groundColorInt2;
+        var bandNumber = (int) (rowDepth / bandDepth);
+        var currentColorInt = bandNumber % 2 == 0 ? colorInt1 : colorInt2;
         var brightness = (1.0 - j * 2.0 / VirtualDisplay.Height) / 2.0 + .5;
         var fadedColor = currentColorInt.ScaleBy(brightness);
 
         for (var i = 0; i < VirtualDisplay.Width; i++)
-          virtualDisplay.ImageData[i, VirtualDisplay.Height - 1 - j] = fadedColor;
+          if (drawFromTop)
+            virtualDisplay.ImageData[i, j] = fadedColor;
+          else
+            virtualDisplay.ImageData[i, VirtualDisplay.Height - 1 - j] = fadedColor;
 
         currentDepth *= depthMultiplier;
       }
