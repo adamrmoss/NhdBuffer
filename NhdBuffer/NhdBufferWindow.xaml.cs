@@ -11,7 +11,6 @@ namespace NhdBuffer
   {
     private const int dpi = 96;
     private static readonly PixelFormat pixelFormat = PixelFormats.Bgr32;
-    private static readonly int bytesPerPixel = (pixelFormat.BitsPerPixel + 7) / 8;
 
     public NhdBufferWindow()
     {
@@ -24,21 +23,12 @@ namespace NhdBuffer
       var screenWidth = SystemParameters.PrimaryScreenWidth;
       var screenHeight = SystemParameters.PrimaryScreenHeight;
 
-      this.canView720 = screenWidth >= this.Display720.Width &&
-                        screenHeight >= this.Display720.Height;
+      this.canView720 = screenWidth >= VirtualDisplay.Width * 2 &&
+                        screenHeight >= VirtualDisplay.Height * 2;
       this.View720MenuItem.IsEnabled = this.canView720;
 
-      this.canView1080 = screenWidth >= this.Display1080.Width &&
-                         screenHeight >= this.Display1080.Height;
-      this.View1080MenuItem.IsEnabled = this.canView1080;
-
-      this.display360Bitmap = new WriteableBitmap(VirtualDisplay.Width, VirtualDisplay.Height, dpi, dpi, pixelFormat, null);
-      this.Display360.Source = this.display360Bitmap;
-      this.display720Bitmap = new WriteableBitmap(VirtualDisplay.Width * 2, VirtualDisplay.Height * 2, dpi, dpi, pixelFormat, null);
-      this.Display720.Source = this.display720Bitmap;
-      this.display1080Bitmap = new WriteableBitmap(VirtualDisplay.Width * 3, VirtualDisplay.Height * 3, dpi, dpi, pixelFormat, null);
-      this.Display1080.Source = this.display1080Bitmap;
-
+      this.displayBitmap = new WriteableBitmap(VirtualDisplay.Width, VirtualDisplay.Height, dpi, dpi, pixelFormat, null);
+      this.Display.Source = this.displayBitmap;
       this.virtualDisplay = new VirtualDisplay();
 
       Task.Run(() => this.loopForBackgroundThread());
@@ -47,12 +37,9 @@ namespace NhdBuffer
     }
 
     private readonly bool canView720;
-    private readonly bool canView1080;
     private readonly WindowStyle designedWindowStyle;
 
-    private readonly WriteableBitmap display360Bitmap;
-    private readonly WriteableBitmap display720Bitmap;
-    private readonly WriteableBitmap display1080Bitmap;
+    private readonly WriteableBitmap displayBitmap;
     private readonly VirtualDisplay virtualDisplay;
     private readonly object processFrameLock = new object();
 
@@ -69,9 +56,9 @@ namespace NhdBuffer
       this.WindowStyle = this.designedWindowStyle;
       this.Topmost = false;
       this.Menu.Visibility = Visibility.Visible;
-      this.Display360.Visibility = Visibility.Visible;
-      this.Display720.Visibility = Visibility.Collapsed;
-      this.Display1080.Visibility = Visibility.Collapsed;
+      this.Display.Visibility = Visibility.Visible;
+      this.Display.Width = VirtualDisplay.Width;
+      this.Display.Height = VirtualDisplay.Height;
     }
 
     public void View720(object sender, RoutedEventArgs e)
@@ -83,26 +70,8 @@ namespace NhdBuffer
         this.WindowStyle = this.designedWindowStyle;
         this.Topmost = false;
         this.Menu.Visibility = Visibility.Visible;
-        this.Display360.Visibility = Visibility.Collapsed;
-        this.Display720.Visibility = Visibility.Visible;
-        this.Display1080.Visibility = Visibility.Collapsed;
-      }
-    }
-
-    public void View1080(object sender, RoutedEventArgs e)
-    {
-      if (this.canView1080)
-      {
-        this.mode = NhdBufferWindowMode.Hd1080;
-        this.Left = 0;
-        this.Top = 0;
-        this.WindowState = WindowState.Maximized;
-        this.WindowStyle = WindowStyle.None;
-        this.Topmost = true;
-        this.Menu.Visibility = Visibility.Collapsed;
-        this.Display360.Visibility = Visibility.Collapsed;
-        this.Display720.Visibility = Visibility.Collapsed;
-        this.Display1080.Visibility = Visibility.Visible;
+        this.Display.Width = VirtualDisplay.Width * 2;
+        this.Display.Height = VirtualDisplay.Height * 2;
       }
     }
 
@@ -117,18 +86,7 @@ namespace NhdBuffer
         {
           this.deltaTime = renderingTime - this.lastRenderingTime;
           this.perFrameAction?.Invoke(this.virtualDisplay, this.deltaTime);
-          switch (this.mode)
-          {
-            case NhdBufferWindowMode.Hd360:
-              this.render360Bitmap();
-              break;
-            case NhdBufferWindowMode.Hd720:
-              this.render720Bitmap();
-              break;
-            case NhdBufferWindowMode.Hd1080:
-              this.render1080Bitmap();
-              break;
-          }
+          this.renderBitmap();
 
           this.readyToProcessFrame = true;
         }
@@ -137,13 +95,13 @@ namespace NhdBuffer
       this.lastRenderingTime = renderingTime;
     }
 
-    private unsafe void render360Bitmap()
+    private unsafe void renderBitmap()
     {
       var virtualDisplayImageData = this.virtualDisplay.ImageData;
 
-      this.display360Bitmap.Lock();
+      this.displayBitmap.Lock();
 
-      var backBufferPointer = (uint) this.display360Bitmap.BackBuffer;
+      var backBufferPointer = (uint) this.displayBitmap.BackBuffer;
       for (var row = 0; row < VirtualDisplay.Height; row++)
       {
         for (var column = 0; column < VirtualDisplay.Width; column++)
@@ -154,85 +112,8 @@ namespace NhdBuffer
           backBufferPointer += 4;
         }
       }
-      this.display360Bitmap.AddDirtyRect(new Int32Rect(0, 0, this.display360Bitmap.PixelWidth, this.display360Bitmap.PixelHeight));
-      this.display360Bitmap.Unlock();
-    }
-
-    private unsafe void render720Bitmap()
-    {
-      var virtualDisplayImageData = this.virtualDisplay.ImageData;
-      const int width = VirtualDisplay.Width * 2;
-      var stride = width * bytesPerPixel;
-
-      this.display720Bitmap.Lock();
-
-      var backBufferPointer0 = (uint) this.display720Bitmap.BackBuffer;
-      var backBufferPointer1 = backBufferPointer0 + stride;
-      for (var row = 0; row < VirtualDisplay.Height; row++)
-      {
-        for (var column = 0; column < VirtualDisplay.Width; column++)
-        {
-          var inputPixel = virtualDisplayImageData[column, row];
-          var outputPixel = inputPixel & 0x00ffffff;
-          *(uint*) backBufferPointer0 = outputPixel;
-          backBufferPointer0 += 4;
-          *(uint*) backBufferPointer0 = outputPixel;
-          backBufferPointer0 += 4;
-          *(uint*) backBufferPointer1 = outputPixel;
-          backBufferPointer1 += 4;
-          *(uint*) backBufferPointer1 = outputPixel;
-          backBufferPointer1 += 4;
-        }
-        backBufferPointer0 = (uint) (backBufferPointer0 + stride);
-        backBufferPointer1 = (uint) (backBufferPointer1 + stride);
-      }
-      this.display720Bitmap.AddDirtyRect(new Int32Rect(0, 0, this.display720Bitmap.PixelWidth, this.display720Bitmap.PixelHeight));
-      this.display720Bitmap.Unlock();
-    }
-
-    private unsafe void render1080Bitmap()
-    {
-      var virtualDisplayImageData = this.virtualDisplay.ImageData;
-      const int width = VirtualDisplay.Width * 3;
-      var stride = width * bytesPerPixel;
-      var doubleStride = stride * 2;
-
-      this.display1080Bitmap.Lock();
-
-      var backBufferPointer0 = (uint) this.display1080Bitmap.BackBuffer;
-      var backBufferPointer1 = backBufferPointer0 + stride;
-      var backBufferPointer2 = backBufferPointer1 + stride;
-      for (var row = 0; row < VirtualDisplay.Height; row++)
-      {
-        for (var column = 0; column < VirtualDisplay.Width; column++)
-        {
-          var inputPixel = virtualDisplayImageData[column, row];
-          var outputPixel = inputPixel & 0x00ffffff;
-          *(uint*) backBufferPointer0 = outputPixel;
-          backBufferPointer0 += 4;
-          *(uint*) backBufferPointer0 = outputPixel;
-          backBufferPointer0 += 4;
-          *(uint*) backBufferPointer0 = outputPixel;
-          backBufferPointer0 += 4;
-          *(uint*) backBufferPointer1 = outputPixel;
-          backBufferPointer1 += 4;
-          *(uint*) backBufferPointer1 = outputPixel;
-          backBufferPointer1 += 4;
-          *(uint*) backBufferPointer1 = outputPixel;
-          backBufferPointer1 += 4;
-          *(uint*) backBufferPointer2 = outputPixel;
-          backBufferPointer2 += 4;
-          *(uint*) backBufferPointer2 = outputPixel;
-          backBufferPointer2 += 4;
-          *(uint*) backBufferPointer2 = outputPixel;
-          backBufferPointer2 += 4;
-        }
-        backBufferPointer0 = (uint) (backBufferPointer0 + doubleStride);
-        backBufferPointer1 = (uint) (backBufferPointer1 + doubleStride);
-        backBufferPointer2 = (uint) (backBufferPointer2 + doubleStride);
-      }
-      this.display1080Bitmap.AddDirtyRect(new Int32Rect(0, 0, this.display1080Bitmap.PixelWidth, this.display1080Bitmap.PixelHeight));
-      this.display1080Bitmap.Unlock();
+      this.displayBitmap.AddDirtyRect(new Int32Rect(0, 0, this.displayBitmap.PixelWidth, this.displayBitmap.PixelHeight));
+      this.displayBitmap.Unlock();
     }
 
     private void loopForBackgroundThread()

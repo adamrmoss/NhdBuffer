@@ -10,13 +10,10 @@
       <MenuItem Header="_File">
         <MenuItem x:Name="View360MenuItem" Header="View _360" Click="View360" />
         <MenuItem x:Name="View720MenuItem" Header="View _720" Click="View720" />
-        <MenuItem x:Name="View1080MenuItem" Header="View _1080" Click="View1080" />
         <Separator />
         <MenuItem Header="_Quit" Click="quit" />
       </MenuItem>
     </Menu>
-    <Image x:Name="Display360" Width="640" Height="360" Margin="12" Stretch="None" />
-    <Image x:Name="Display720" Width="1280" Height="720" Margin="12" Stretch="None" Visibility="Collapsed" />
-    <Image x:Name="Display1080" Width="1920" Height="1080" Margin="0" Stretch="None" Visibility="Collapsed" />
+    <Image x:Name="Display" Width="640" Height="360" Margin="12" Stretch="UniformToFill" />
   </StackPanel>
 </Window>
