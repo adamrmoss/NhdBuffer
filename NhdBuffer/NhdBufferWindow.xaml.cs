@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -108,8 +109,6 @@ namespace NhdBuffer
       {
         var deltaTime = renderingTime - this.lastRenderingTime;
         this.perFrameAction?.Invoke(this.virtualDisplay, deltaTime);
-
-        this.virtualDisplay.ProcessOneFrame(deltaTime);
         switch (this.mode)
         {
           case NhdBufferWindowMode.Hd360:
@@ -122,6 +121,10 @@ namespace NhdBuffer
             this.render1080Bitmap();
             break;
         }
+
+        // TODO: Move to separate thread?
+        //Task.Run(() => this.virtualDisplay.ProcessOneFrame(deltaTime));
+        this.virtualDisplay.ProcessOneFrame(deltaTime);
       }
 
       this.lastRenderingTime = renderingTime;
