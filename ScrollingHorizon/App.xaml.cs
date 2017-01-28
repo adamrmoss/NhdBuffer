@@ -17,12 +17,12 @@ namespace ScrollingHorizon
     private static readonly Color groundColor1 = Colors.DarkGreen;
     private static readonly Color groundColor2 = Colors.DarkOliveGreen;
 
-    private const double skyBandDepth = 8.0;
-    private const double groundBandDepth = 1.0;
+    private const double skyBandDepth = 18.0;
+    private const double groundBandDepth = 4.0;
 
     private double cameraPosition = 0.0;
-    private const double cameraMovementSpeed = 4.0;
-    private const double depthOfField = 60.0;
+    private const double cameraMovementSpeed = 12.0;
+    private const double depthOfField = 45.0;
 
     public App()
     {
